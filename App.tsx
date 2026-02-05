@@ -2,7 +2,7 @@
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { DomainVariables, StepId, ChatMessage } from './types';
 import { INITIAL_VARIABLES, PROMPT_TEMPLATE } from './constants';
-import { brainstormVariables, chatWithExpert } from './services/geminiService';
+import { brainstormVariables, chatWithExpert, extractLinguisticPatterns } from './services/geminiService';
 
 // --- Atomic Components ---
 
@@ -116,12 +116,20 @@ export default function App() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [userInput, setUserInput] = useState('');
   const [isChatting, setIsChatting] = useState(false);
+  
+  // General Ingestion States
   const [brainstormInput, setBrainstormInput] = useState('');
   const [isBrainstorming, setIsBrainstorming] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<{ name: string, data: string, mimeType: string } | null>(null);
   
+  // Speaking Pattern Specific States
+  const [isAnalyzingSpeech, setIsAnalyzingSpeech] = useState(false);
+  const [speechSampleText, setSpeechSampleText] = useState('');
+  const [speechFile, setSpeechFile] = useState<{ name: string, data: string, mimeType: string } | null>(null);
+
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const speechFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (chatScrollRef.current) {
@@ -133,17 +141,19 @@ export default function App() {
     setVars(prev => ({ ...prev, [name]: val }));
   }, []);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'general' | 'speech') => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64String = (reader.result as string).split(',')[1];
-        setUploadedFile({
+        const fileData = {
           name: file.name,
           data: base64String,
           mimeType: file.type
-        });
+        };
+        if (type === 'general') setUploadedFile(fileData);
+        else setSpeechFile(fileData);
       };
       reader.readAsDataURL(file);
     }
@@ -159,6 +169,19 @@ export default function App() {
       console.error("Brainstorm failed", e);
     } finally {
       setIsBrainstorming(false);
+    }
+  };
+
+  const handleSpeechAnalysis = async () => {
+    if (!speechSampleText.trim() && !speechFile) return;
+    setIsAnalyzingSpeech(true);
+    try {
+      const patternSummary = await extractLinguisticPatterns(speechSampleText, speechFile || undefined);
+      updateVar('speakingPatterns', patternSummary);
+    } catch (e) {
+      console.error("Speech analysis failed", e);
+    } finally {
+      setIsAnalyzingSpeech(false);
     }
   };
 
@@ -261,12 +284,12 @@ export default function App() {
             
             {activeStep === 'identity' && (
               <div className="animate-in fade-in slide-in-from-bottom-6 duration-700">
-                <SketchedCard title="Module: Neural_Extraction">
+                <SketchedCard title="Module: Neural_Role_Ingestion">
                   <div className="space-y-6">
                     <div className="flex flex-col sm:flex-row gap-4">
                       <input 
                         type="text" 
-                        placeholder="Define Expert Domain, Role, or Context..." 
+                        placeholder="Expert Role, Mission, or Topic Overview..." 
                         className="flex-1 bg-black/70 border-2 border-zinc-800 p-5 text-sm font-bold text-white outline-none focus:border-orange-500 transition-all placeholder:text-zinc-600"
                         value={brainstormInput}
                         onChange={(e) => setBrainstormInput(e.target.value)}
@@ -277,7 +300,7 @@ export default function App() {
                         disabled={isBrainstorming}
                         className="bg-orange-500 text-black px-10 py-5 text-xs font-black uppercase transition-all hover:bg-orange-400 disabled:opacity-50 flex-shrink-0 active:scale-90 shadow-2xl shadow-orange-950/40"
                       >
-                        {isBrainstorming ? 'CALCULATING...' : 'AI_GENERATE_BLUEPRINT'}
+                        {isBrainstorming ? 'SKETCHING...' : 'AI_ROLE_SKETCH'}
                       </button>
                     </div>
                     
@@ -285,7 +308,7 @@ export default function App() {
                       <input 
                         type="file" 
                         ref={fileInputRef} 
-                        onChange={handleFileChange} 
+                        onChange={(e) => handleFileChange(e, 'general')} 
                         className="hidden" 
                         accept=".pdf,.doc,.docx,.txt"
                       />
@@ -294,16 +317,16 @@ export default function App() {
                         className="text-[11px] mono font-black text-zinc-300 border-2 border-dashed border-zinc-700 px-6 py-3.5 hover:text-orange-400 hover:border-orange-600 flex items-center gap-4 uppercase tracking-[0.2em] transition-all bg-zinc-900/40"
                       >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
-                        {uploadedFile ? uploadedFile.name : 'INGEST_EXPERT_DOCS'}
+                        {uploadedFile ? uploadedFile.name : 'INGEST_EXPERT_ROLE_DOC'}
                       </button>
                       {uploadedFile && (
                         <button 
                           onClick={() => setUploadedFile(null)}
                           className="text-[10px] text-zinc-500 hover:text-red-500 uppercase mono font-black border-b border-zinc-800"
                         >
-                          [PURGE_DATA]
+                          [PURGE_ROLE_DATA]
                         </button>
                       )}
                     </div>
@@ -339,30 +362,82 @@ export default function App() {
                     </div>
                   </SketchedCard>
                 ) : (
-                  <SketchedCard title="Module: Neural_Linguistic_Cues">
-                    <p className="text-[11px] text-zinc-500 mono uppercase mb-8 tracking-[0.2em] leading-relaxed">
-                      Linguistic fingerprinting: captured from Ingested Reference Documents. Captures jargon frequency, sentence rhythm, and voice signature.
-                    </p>
-                    <SketchedInput 
-                      label="Syntactic & Jargon Patterns" 
-                      type="textarea" 
-                      value={vars.speakingPatterns} 
-                      onChange={(v) => updateVar('speakingPatterns', v)} 
-                      placeholder="e.g. Extremely direct, uses structural analogies, avoids fillers, technical terminology high-density..." 
-                    />
-                    <div className="p-6 bg-orange-500/5 border-2 border-orange-500/20 rounded-lg shadow-inner">
-                      <h4 className="handwritten text-orange-400 text-sm mb-3 flex items-center gap-2">
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        Architect's Analysis:
-                      </h4>
-                      <p className="text-[11px] text-zinc-400 leading-relaxed italic">
-                        By defining specific speaking patterns, the neural model can bypass standard conversational filler and adopt a more authentic domain-expert stance. 
-                        Ingesting documents automatically fine-tunes this field to match the provided writing style.
+                  <div className="space-y-6">
+                    <SketchedCard title="Module: Specialized_Linguistic_Parser">
+                      <p className="text-[11px] text-zinc-500 mono uppercase mb-8 tracking-[0.2em] leading-relaxed">
+                        Ingest specific text samples (blog posts, whitepapers, transcripts) to extract the linguistic signature of the expert. 
+                        This parser isolates the *style* of speech from the *content* of the role.
                       </p>
-                    </div>
-                  </SketchedCard>
+                      
+                      <div className="space-y-6">
+                        <div className="flex flex-col sm:flex-row gap-4">
+                          <input 
+                            type="text" 
+                            placeholder="Briefly describe the target tone (e.g. 'Highly technical, terse, academic')..." 
+                            className="flex-1 bg-black/70 border-2 border-zinc-800 p-5 text-sm font-bold text-white outline-none focus:border-orange-500 transition-all placeholder:text-zinc-600"
+                            value={speechSampleText}
+                            onChange={(e) => setSpeechSampleText(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleSpeechAnalysis()}
+                          />
+                          <button 
+                            onClick={handleSpeechAnalysis}
+                            disabled={isAnalyzingSpeech}
+                            className="bg-orange-400 text-black px-10 py-5 text-xs font-black uppercase transition-all hover:bg-orange-300 disabled:opacity-50 flex-shrink-0 active:scale-90 shadow-2xl shadow-orange-950/20"
+                          >
+                            {isAnalyzingSpeech ? 'EXTRACTING...' : 'AI_EXTRACT_STYLE'}
+                          </button>
+                        </div>
+                        
+                        <div className="flex flex-wrap items-center gap-5 pt-2">
+                          <input 
+                            type="file" 
+                            ref={speechFileInputRef} 
+                            onChange={(e) => handleFileChange(e, 'speech')} 
+                            className="hidden" 
+                            accept=".pdf,.doc,.docx,.txt"
+                          />
+                          <button 
+                            onClick={() => speechFileInputRef.current?.click()}
+                            className="text-[11px] mono font-black text-orange-400 border-2 border-dashed border-orange-500/30 px-6 py-3.5 hover:text-orange-300 hover:border-orange-500 flex items-center gap-4 uppercase tracking-[0.2em] transition-all bg-orange-500/5"
+                          >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                            </svg>
+                            {speechFile ? speechFile.name : 'INGEST_STYLE_SAMPLE_DOC'}
+                          </button>
+                          {speechFile && (
+                            <button 
+                              onClick={() => setSpeechFile(null)}
+                              className="text-[10px] text-zinc-500 hover:text-red-500 uppercase mono font-black border-b border-zinc-800"
+                            >
+                              [PURGE_STYLE_DATA]
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </SketchedCard>
+
+                    <SketchedCard title="Module: Syntactic_Signature">
+                      <SketchedInput 
+                        label="Linguistic Fingerprint" 
+                        type="textarea" 
+                        value={vars.speakingPatterns} 
+                        onChange={(v) => updateVar('speakingPatterns', v)} 
+                        placeholder="Neural linguistic markers will appear here..." 
+                      />
+                      <div className="p-6 bg-orange-500/5 border-2 border-orange-500/20 rounded-lg shadow-inner">
+                        <h4 className="handwritten text-orange-400 text-sm mb-3 flex items-center gap-2">
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          Linguistic Architect Notes:
+                        </h4>
+                        <p className="text-[11px] text-zinc-400 leading-relaxed italic">
+                          This specialized parser isolates the target persona's unique 'voice' from the ingested sample. Use it to feed the AI real examples of how the expert writes, allowing it to adopt specific technical jargon and sentence cadences natively.
+                        </p>
+                      </div>
+                    </SketchedCard>
+                  </div>
                 )}
               </div>
             )}
