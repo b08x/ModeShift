@@ -1,28 +1,74 @@
-
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ModeShift</title>
+    <title>ModeShift | Master Architect</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        darkMode: 'class',
-      }
-    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; transition: background-color 0.3s ease, color 0.3s ease; }
+        :root {
+            --bg-base: #020203;
+            --bg-card: rgba(12, 12, 15, 0.85);
+            --accent: #fb923c; /* Brighter orange-400 */
+            --accent-glow: rgba(251, 146, 60, 0.3);
+            --border-dim: rgba(255, 255, 255, 0.15);
+        }
+
+        body { 
+          font-family: 'Inter', sans-serif; 
+          background-color: var(--bg-base); 
+          color: #f4f4f5;
+          margin: 0;
+          height: 100vh;
+          -webkit-font-smoothing: antialiased;
+        }
+
         .mono { font-family: 'JetBrains Mono', monospace; }
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
-        .dark ::-webkit-scrollbar-thumb { background: #334155; }
-        ::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
-        .dark ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        .handwritten { font-family: 'Architects Daughter', cursive; }
+        
+        .blueprint-dots {
+          background-image: radial-gradient(rgba(255,255,255,0.08) 1.2px, transparent 1.2px);
+          background-size: 40px 40px;
+        }
+
+        .sketch-border {
+          border: 2px solid var(--border-dim);
+          border-radius: 6px 18px 4px 12px / 18px 6px 12px 4px;
+        }
+
+        .sketch-border-active {
+          border: 2px solid var(--accent);
+          border-radius: 6px 18px 4px 12px / 18px 6px 12px 4px;
+          box-shadow: 0 0 30px var(--accent-glow);
+        }
+
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 10px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #52525b; }
+
+        @keyframes drawLine {
+          0% { stroke-dashoffset: 1000; }
+          100% { stroke-dashoffset: 0; }
+        }
+
+        .animate-draw {
+          stroke-dasharray: 1000;
+          animation: drawLine 2.5s ease-out forwards;
+        }
+
+        @keyframes pulse-intense {
+          0%, 100% { opacity: 0.4; filter: blur(0px); }
+          50% { opacity: 0.9; filter: blur(1px); }
+        }
+        .glow-pulse-intense { animation: pulse-intense 2s ease-in-out infinite; }
+        
+        .text-shadow-vivid {
+          text-shadow: 0 0 10px rgba(251, 146, 60, 0.4);
+        }
     </style>
 <script type="importmap">
 {
@@ -35,7 +81,7 @@
 }
 </script>
 </head>
-<body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+<body class="blueprint-dots overflow-hidden selection:bg-orange-500/40">
     <div id="root"></div>
 </body>
 </html>
