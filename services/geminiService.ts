@@ -4,12 +4,30 @@ import { DomainVariables } from "../types";
 
 const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
 
-export const brainstormVariables = async (topic: string): Promise<Partial<DomainVariables>> => {
+export const brainstormVariables = async (
+  topic: string, 
+  fileData?: { data: string, mimeType: string }
+): Promise<Partial<DomainVariables>> => {
   const ai = getAI();
+  
+  const parts: any[] = [
+    { text: `Brainstorm domain expert variables for the following topic/context: "${topic}". 
+    Return a JSON object matching the provided schema. 
+    If a document is provided, extract relevant information from it to populate the expert profile accurately.` }
+  ];
+
+  if (fileData) {
+    parts.push({
+      inlineData: {
+        data: fileData.data,
+        mimeType: fileData.mimeType,
+      },
+    });
+  }
+
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
-    contents: `Brainstorm domain expert variables for the following topic: "${topic}". 
-    Return a JSON object matching the provided schema.`,
+    contents: { parts },
     config: {
       responseMimeType: "application/json",
       responseSchema: {
@@ -43,8 +61,6 @@ export const chatWithExpert = async (systemPrompt: string, history: { role: 'use
     }
   });
 
-  // Sending the full history is better for context
-  // But for simple sandbox, we just send the latest message
   const lastMessage = history[history.length - 1].text;
   const result = await chat.sendMessage({ message: lastMessage });
   return result.text;
