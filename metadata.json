@@ -1,0 +1,7 @@
+{
+  "name": "ModeShift",
+  "description": "A high-end system prompt generator for creating sophisticated domain-expert AI personas using the Natural Pacing Protocol.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
