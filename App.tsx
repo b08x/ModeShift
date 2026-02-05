@@ -204,17 +204,58 @@ export default function App() {
     }
   };
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(finalPrompt);
-    const btn = document.getElementById('copy-btn');
+  // --- Export Serialization Functions ---
+
+  const toYAML = (obj: any) => {
+    return Object.entries(obj)
+      .map(([key, value]) => {
+        const escaped = String(value).replace(/\n/g, '\\n');
+        return `${key}: "${escaped}"`;
+      })
+      .join('\n');
+  };
+
+  const toXML = (obj: any) => {
+    const content = Object.entries(obj)
+      .map(([key, value]) => `<${key}>${String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</${key}>`)
+      .join('\n  ');
+    return `<Blueprint>\n  ${content}\n</Blueprint>`;
+  };
+
+  const exportAction = (type: 'raw' | 'yaml' | 'json' | 'xml') => {
+    let content = '';
+    let btnId = '';
+
+    switch (type) {
+      case 'raw': 
+        content = finalPrompt; 
+        btnId = 'export-raw';
+        break;
+      case 'yaml': 
+        content = toYAML(vars); 
+        btnId = 'export-yaml';
+        break;
+      case 'json': 
+        content = JSON.stringify(vars, null, 2); 
+        btnId = 'export-json';
+        break;
+      case 'xml': 
+        content = toXML(vars); 
+        btnId = 'export-xml';
+        break;
+    }
+
+    navigator.clipboard.writeText(content);
+    
+    const btn = document.getElementById(btnId);
     if (btn) {
       const originalText = btn.innerText;
-      btn.innerText = 'CODE_SYNCED_√';
-      btn.classList.add('bg-green-600', 'text-white', 'border-green-500');
+      btn.innerText = 'COPIED';
+      btn.classList.add('bg-green-600', 'text-white', 'border-green-400');
       setTimeout(() => {
         btn.innerText = originalText;
-        btn.classList.remove('bg-green-600', 'text-white', 'border-green-500');
-      }, 2500);
+        btn.classList.remove('bg-green-600', 'text-white', 'border-green-400');
+      }, 1500);
     }
   };
 
@@ -254,8 +295,8 @@ export default function App() {
       <main className="flex-1 flex flex-col min-w-0 bg-black/40 pb-24 lg:pb-0 overflow-hidden relative">
         <div className="absolute inset-0 blueprint-dots opacity-20 pointer-events-none"></div>
         
-        <header className="px-8 py-7 border-b-2 border-white/5 flex justify-between items-center bg-zinc-950/95 backdrop-blur-2xl z-30 shadow-2xl">
-          <div className="flex items-center gap-6">
+        <header className="px-8 py-6 border-b-2 border-white/5 flex flex-col md:flex-row gap-6 justify-between items-center bg-zinc-950/95 backdrop-blur-2xl z-30 shadow-2xl">
+          <div className="flex items-center gap-6 self-start md:self-center">
             <div className="w-12 h-12 border-4 border-orange-500 rounded-sm flex items-center justify-center rotate-6 flex-shrink-0 transition-all hover:rotate-0 hover:scale-110 duration-500 shadow-[0_0_20px_rgba(249,115,22,0.3)]">
               <span className="text-orange-500 font-black text-3xl handwritten">M</span>
             </div>
@@ -270,13 +311,37 @@ export default function App() {
               </div>
             </div>
           </div>
-          <button 
-            id="copy-btn"
-            onClick={copyToClipboard} 
-            className="text-[12px] mono font-black border-2 border-orange-500/30 text-orange-500 px-8 py-3.5 hover:bg-orange-500 hover:text-black hover:border-orange-400 transition-all uppercase tracking-widest active:scale-95 shadow-xl flex-shrink-0"
-          >
-            Export_Source_Code
-          </button>
+
+          <div className="flex flex-wrap gap-2 items-center justify-end w-full md:w-auto">
+             <button 
+              id="export-raw"
+              onClick={() => exportAction('raw')} 
+              className="text-[10px] mono font-black border-2 border-orange-500/30 text-orange-500 px-4 py-2 hover:bg-orange-500 hover:text-black hover:border-orange-400 transition-all uppercase tracking-widest active:scale-95 shadow-xl flex-shrink-0"
+            >
+              PROMPT
+            </button>
+            <button 
+              id="export-json"
+              onClick={() => exportAction('json')} 
+              className="text-[10px] mono font-black border-2 border-zinc-700 text-zinc-400 px-4 py-2 hover:bg-zinc-200 hover:text-black hover:border-white transition-all uppercase tracking-widest active:scale-95 shadow-xl flex-shrink-0"
+            >
+              JSON
+            </button>
+            <button 
+              id="export-yaml"
+              onClick={() => exportAction('yaml')} 
+              className="text-[10px] mono font-black border-2 border-zinc-700 text-zinc-400 px-4 py-2 hover:bg-zinc-200 hover:text-black hover:border-white transition-all uppercase tracking-widest active:scale-95 shadow-xl flex-shrink-0"
+            >
+              YAML
+            </button>
+            <button 
+              id="export-xml"
+              onClick={() => exportAction('xml')} 
+              className="text-[10px] mono font-black border-2 border-zinc-700 text-zinc-400 px-4 py-2 hover:bg-zinc-200 hover:text-black hover:border-white transition-all uppercase tracking-widest active:scale-95 shadow-xl flex-shrink-0"
+            >
+              XML
+            </button>
+          </div>
         </header>
 
         <div className="flex-1 overflow-y-auto p-6 md:p-12 lg:p-16 custom-scroll relative z-10">
@@ -333,7 +398,6 @@ export default function App() {
                   </div>
                 </SketchedCard>
 
-                {/* Sub-navigation for Identity module */}
                 <div className="flex gap-4 mb-6">
                   <button 
                     onClick={() => setIdentityTab('core')}
@@ -425,17 +489,6 @@ export default function App() {
                         onChange={(v) => updateVar('speakingPatterns', v)} 
                         placeholder="Neural linguistic markers will appear here..." 
                       />
-                      <div className="p-6 bg-orange-500/5 border-2 border-orange-500/20 rounded-lg shadow-inner">
-                        <h4 className="handwritten text-orange-400 text-sm mb-3 flex items-center gap-2">
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          Linguistic Architect Notes:
-                        </h4>
-                        <p className="text-[11px] text-zinc-400 leading-relaxed italic">
-                          This specialized parser isolates the target persona's unique 'voice' from the ingested sample. Use it to feed the AI real examples of how the expert writes, allowing it to adopt specific technical jargon and sentence cadences natively.
-                        </p>
-                      </div>
                     </SketchedCard>
                   </div>
                 )}
@@ -575,14 +628,6 @@ export default function App() {
             <div className="flex-1 overflow-y-auto custom-scroll mono text-[11px] leading-relaxed text-zinc-400 font-bold pr-4 scroll-smooth">
               {renderPreview()}
             </div>
-            
-            {/* Architectural Trace Decorations */}
-            <svg className="absolute inset-0 pointer-events-none opacity-[0.08]">
-              <path d="M 0 80 Q 200 110 400 90" stroke="#f97316" strokeWidth="2" fill="none" className="animate-draw" />
-              <path d="M 0 450 Q 250 420 500 440" stroke="#f97316" strokeWidth="1.5" fill="none" className="animate-draw" />
-              <path d="M 150 0 Q 180 300 160 600" stroke="#f97316" strokeWidth="0.8" fill="none" />
-              <circle cx="160" cy="100" r="4" fill="#f97316" className="glow-pulse-intense" />
-            </svg>
           </div>
         </div>
       </aside>
