@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { DomainVariables, StepId, ChatMessage } from './types';
 import { INITIAL_VARIABLES, PROMPT_TEMPLATE } from './constants';
@@ -111,6 +112,7 @@ const Navigator: React.FC<{ current: StepId; onClick: (s: StepId) => void }> = (
 export default function App() {
   const [vars, setVars] = useState<DomainVariables>(INITIAL_VARIABLES);
   const [activeStep, setActiveStep] = useState<StepId>('identity');
+  const [identityTab, setIdentityTab] = useState<'core' | 'patterns'>('core');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [userInput, setUserInput] = useState('');
   const [isChatting, setIsChatting] = useState(false);
@@ -199,7 +201,7 @@ export default function App() {
       
       let elements: React.ReactNode[] = [line];
       
-      const checkVars: (keyof DomainVariables)[] = ['roleTitle', 'domainArea', 'expertiseLevel'];
+      const checkVars: (keyof DomainVariables)[] = ['roleTitle', 'domainArea', 'expertiseLevel', 'speakingPatterns'];
       checkVars.forEach(vKey => {
         const val = vars[vKey];
         if (val && line.includes(val)) {
@@ -308,17 +310,60 @@ export default function App() {
                   </div>
                 </SketchedCard>
 
-                <SketchedCard title="Module: Identity_Logic">
-                  <div className="grid grid-cols-1 gap-4">
-                    <SketchedInput label="Designated Expert Title" value={vars.roleTitle} onChange={(v) => updateVar('roleTitle', v)} placeholder="e.g. Lead DevSecOps Architect" />
-                    <SketchedInput label="High-Resolution Domain" value={vars.domainArea} onChange={(v) => updateVar('domainArea', v)} placeholder="e.g. Scalable Infrastructure & Network Hardening" />
-                    <SketchedInput label="Operational Mission" type="textarea" value={vars.primaryResponsibilities} onChange={(v) => updateVar('primaryResponsibilities', v)} placeholder="Describe the expert's primary goals..." />
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
-                    <SketchedInput label="Core Technologies" value={vars.keySystems} onChange={(v) => updateVar('keySystems', v)} placeholder="Terraform, Kubernetes, GCP..." />
-                    <SketchedInput label="Primary Task Vectors" value={vars.commonTaskTypes} onChange={(v) => updateVar('commonTaskTypes', v)} placeholder="Troubleshooting, Design, Compliance..." />
-                  </div>
-                </SketchedCard>
+                {/* Sub-navigation for Identity module */}
+                <div className="flex gap-4 mb-6">
+                  <button 
+                    onClick={() => setIdentityTab('core')}
+                    className={`px-8 py-3 mono font-black text-[11px] tracking-widest uppercase transition-all border-2 ${identityTab === 'core' ? 'bg-orange-500 text-black border-orange-400 shadow-[0_0_15px_rgba(249,115,22,0.4)]' : 'bg-zinc-900/50 text-zinc-500 border-zinc-800 hover:border-zinc-600 hover:text-zinc-300'}`}
+                  >
+                    Core Identity
+                  </button>
+                  <button 
+                    onClick={() => setIdentityTab('patterns')}
+                    className={`px-8 py-3 mono font-black text-[11px] tracking-widest uppercase transition-all border-2 ${identityTab === 'patterns' ? 'bg-orange-500 text-black border-orange-400 shadow-[0_0_15px_rgba(249,115,22,0.4)]' : 'bg-zinc-900/50 text-zinc-500 border-zinc-800 hover:border-zinc-600 hover:text-zinc-300'}`}
+                  >
+                    Speaking Patterns
+                  </button>
+                </div>
+
+                {identityTab === 'core' ? (
+                  <SketchedCard title="Module: Identity_Logic">
+                    <div className="grid grid-cols-1 gap-4">
+                      <SketchedInput label="Designated Expert Title" value={vars.roleTitle} onChange={(v) => updateVar('roleTitle', v)} placeholder="e.g. Lead DevSecOps Architect" />
+                      <SketchedInput label="High-Resolution Domain" value={vars.domainArea} onChange={(v) => updateVar('domainArea', v)} placeholder="e.g. Scalable Infrastructure & Network Hardening" />
+                      <SketchedInput label="Operational Mission" type="textarea" value={vars.primaryResponsibilities} onChange={(v) => updateVar('primaryResponsibilities', v)} placeholder="Describe the expert's primary goals..." />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
+                      <SketchedInput label="Core Technologies" value={vars.keySystems} onChange={(v) => updateVar('keySystems', v)} placeholder="Terraform, Kubernetes, GCP..." />
+                      <SketchedInput label="Primary Task Vectors" value={vars.commonTaskTypes} onChange={(v) => updateVar('commonTaskTypes', v)} placeholder="Troubleshooting, Design, Compliance..." />
+                    </div>
+                  </SketchedCard>
+                ) : (
+                  <SketchedCard title="Module: Neural_Linguistic_Cues">
+                    <p className="text-[11px] text-zinc-500 mono uppercase mb-8 tracking-[0.2em] leading-relaxed">
+                      Linguistic fingerprinting: captured from Ingested Reference Documents. Captures jargon frequency, sentence rhythm, and voice signature.
+                    </p>
+                    <SketchedInput 
+                      label="Syntactic & Jargon Patterns" 
+                      type="textarea" 
+                      value={vars.speakingPatterns} 
+                      onChange={(v) => updateVar('speakingPatterns', v)} 
+                      placeholder="e.g. Extremely direct, uses structural analogies, avoids fillers, technical terminology high-density..." 
+                    />
+                    <div className="p-6 bg-orange-500/5 border-2 border-orange-500/20 rounded-lg shadow-inner">
+                      <h4 className="handwritten text-orange-400 text-sm mb-3 flex items-center gap-2">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Architect's Analysis:
+                      </h4>
+                      <p className="text-[11px] text-zinc-400 leading-relaxed italic">
+                        By defining specific speaking patterns, the neural model can bypass standard conversational filler and adopt a more authentic domain-expert stance. 
+                        Ingesting documents automatically fine-tunes this field to match the provided writing style.
+                      </p>
+                    </div>
+                  </SketchedCard>
+                )}
               </div>
             )}
 

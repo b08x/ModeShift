@@ -19,6 +19,7 @@ export interface DomainVariables {
   efficientCollaborativeStyle: string;
   complexScenario: string;
   investigativeAnalyticalStyle: string;
+  speakingPatterns: string;
 }
 
 export type StepId = 'identity' | 'context' | 'scenarios' | 'preview' | 'sandbox';

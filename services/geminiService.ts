@@ -13,7 +13,8 @@ export const brainstormVariables = async (
   const parts: any[] = [
     { text: `Brainstorm domain expert variables for the following topic/context: "${topic}". 
     Return a JSON object matching the provided schema. 
-    If a document is provided, extract relevant information from it to populate the expert profile accurately.` }
+    If a document is provided, extract relevant information from it to populate the expert profile accurately.
+    Specifically, analyze the "speakingPatterns" property to capture stylistic linguistic markers, jargon frequency, and the specific 'voice' or 'persona' found in the reference document.` }
   ];
 
   if (fileData) {
@@ -39,7 +40,9 @@ export const brainstormVariables = async (
           keySystems: { type: Type.STRING },
           commonTaskTypes: { type: Type.STRING },
           stakeholderExpectations: { type: Type.STRING },
-        }
+          speakingPatterns: { type: Type.STRING, description: "Stylistic linguistic markers, jargon, and voice characteristics." },
+        },
+        required: ["roleTitle", "domainArea", "speakingPatterns"]
       }
     }
   });
