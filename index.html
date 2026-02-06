@@ -3,71 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ModeShift | Master Architect</title>
+    <title>ModeShift | Professional System Architect</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-base: #020203;
-            --bg-card: rgba(12, 12, 15, 0.85);
-            --accent: #fb923c; /* Brighter orange-400 */
-            --accent-glow: rgba(251, 146, 60, 0.3);
-            --border-dim: rgba(255, 255, 255, 0.15);
+            --bg-base: #09090b;
+            --bg-surface: #121217;
+            --accent: #6366f1; /* Indigo 500 */
+            --accent-soft: rgba(99, 102, 241, 0.1);
+            --border-base: #27272a;
+            --text-primary: #f4f4f5;
+            --text-secondary: #a1a1aa;
         }
 
         body { 
           font-family: 'Inter', sans-serif; 
           background-color: var(--bg-base); 
-          color: #f4f4f5;
+          color: var(--text-primary);
           margin: 0;
           height: 100vh;
           -webkit-font-smoothing: antialiased;
         }
 
         .mono { font-family: 'JetBrains Mono', monospace; }
-        .handwritten { font-family: 'Architects Daughter', cursive; }
         
-        .blueprint-dots {
-          background-image: radial-gradient(rgba(255,255,255,0.08) 1.2px, transparent 1.2px);
+        .grid-bg {
+          background-image: 
+            linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px);
           background-size: 40px 40px;
         }
 
-        .sketch-border {
-          border: 2px solid var(--border-dim);
-          border-radius: 6px 18px 4px 12px / 18px 6px 12px 4px;
-        }
-
-        .sketch-border-active {
-          border: 2px solid var(--accent);
-          border-radius: 6px 18px 4px 12px / 18px 6px 12px 4px;
-          box-shadow: 0 0 30px var(--accent-glow);
-        }
-
-        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-track { background: transparent; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 10px; }
         .custom-scroll::-webkit-scrollbar-thumb:hover { background: #52525b; }
 
-        @keyframes drawLine {
-          0% { stroke-dashoffset: 1000; }
-          100% { stroke-dashoffset: 0; }
+        .glass-card {
+          background: rgba(24, 24, 27, 0.4);
+          backdrop-filter: blur(8px);
+          border: 1px solid var(--border-base);
         }
 
-        .animate-draw {
-          stroke-dasharray: 1000;
-          animation: drawLine 2.5s ease-out forwards;
+        .active-border {
+          border-color: var(--accent);
+          box-shadow: 0 0 20px rgba(99, 102, 241, 0.1);
         }
 
-        @keyframes pulse-intense {
-          0%, 100% { opacity: 0.4; filter: blur(0px); }
-          50% { opacity: 0.9; filter: blur(1px); }
+        @keyframes subtle-glow {
+          0%, 100% { opacity: 0.5; }
+          50% { opacity: 1; }
         }
-        .glow-pulse-intense { animation: pulse-intense 2s ease-in-out infinite; }
+        .animate-glow { animation: subtle-glow 4s ease-in-out infinite; }
         
-        .text-shadow-vivid {
-          text-shadow: 0 0 10px rgba(251, 146, 60, 0.4);
+        input:focus, textarea:focus {
+          outline: none;
+          border-color: var(--accent);
+          background-color: rgba(0, 0, 0, 0.3);
+        }
+
+        .nav-indicator {
+          position: absolute;
+          left: 0;
+          width: 2px;
+          height: 100%;
+          background: var(--accent);
+          opacity: 0;
+          transition: all 0.3s ease;
+        }
+        .nav-item-active .nav-indicator {
+          opacity: 1;
         }
     </style>
 <script type="importmap">
@@ -81,7 +89,7 @@
 }
 </script>
 </head>
-<body class="blueprint-dots overflow-hidden selection:bg-orange-500/40">
+<body class="grid-bg overflow-hidden selection:bg-indigo-500/30">
     <div id="root"></div>
 </body>
 </html>

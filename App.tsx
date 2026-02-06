@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { DomainVariables, StepId, ChatMessage } from './types';
 import { INITIAL_VARIABLES, PROMPT_TEMPLATE } from './constants';
@@ -6,103 +5,98 @@ import { brainstormVariables, chatWithExpert, extractLinguisticPatterns } from '
 
 // --- Atomic Components ---
 
-const HighlightLabel: React.FC<{ text: string }> = ({ text }) => (
-  <span className="handwritten text-orange-400 bg-orange-400/10 px-2 py-1 rounded-sm border-b-2 border-orange-400/50 whitespace-nowrap inline-block text-sm">
-    {text || '[UNDEFINED]'}
+const Badge: React.FC<{ text: string }> = ({ text }) => (
+  <span className="mono text-[10px] bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded border border-indigo-500/20 whitespace-nowrap inline-block uppercase tracking-wider">
+    {text || '[EMPTY]'}
   </span>
 );
 
-const SketchedCard: React.FC<{ children: React.ReactNode; className?: string; title?: string }> = ({ children, className = '', title }) => (
-  <div className={`sketch-border bg-zinc-900/60 p-6 md:p-8 mb-8 relative group transition-all duration-500 hover:bg-zinc-900/80 shadow-2xl ${className}`}>
+const Card: React.FC<{ children: React.ReactNode; className?: string; title?: string }> = ({ children, className = '', title }) => (
+  <div className={`glass-card rounded-xl overflow-hidden transition-all duration-300 ${className}`}>
     {title && (
-      <div className="absolute -top-4 left-6 bg-orange-500 px-3 py-1 handwritten text-xs text-black font-bold uppercase tracking-widest z-10 shadow-lg">
-        {title}
+      <div className="px-6 py-3 border-b border-zinc-800 bg-zinc-900/50 flex items-center justify-between">
+        <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400">{title}</h3>
       </div>
     )}
-    {children}
+    <div className="p-6">
+      {children}
+    </div>
   </div>
 );
 
-const SketchedInput: React.FC<{
+const FormField: React.FC<{
   label: string;
   value: string;
   onChange: (val: string) => void;
   placeholder?: string;
   type?: 'text' | 'textarea';
 }> = ({ label, value, onChange, placeholder, type = 'text' }) => {
-  const [isFocused, setIsFocused] = useState(false);
-
   return (
-    <div className="mb-6">
-      <label className="block mono text-[10px] uppercase font-black text-zinc-400 mb-2 tracking-widest">
+    <div className="mb-6 last:mb-0">
+      <label className="block text-[10px] uppercase font-semibold text-zinc-500 mb-2 tracking-widest">
         {label}
       </label>
       {type === 'textarea' ? (
         <textarea
           rows={3}
           value={value}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className={`w-full bg-black/50 p-4 text-sm font-medium text-white outline-none transition-all duration-300 custom-scroll border-2 border-transparent ${
-            isFocused ? 'sketch-border-active' : 'sketch-border border-zinc-800'
-          }`}
+          className="w-full bg-zinc-950/50 border border-zinc-800 rounded-lg p-3 text-sm text-zinc-200 transition-all duration-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 resize-none custom-scroll"
         />
       ) : (
         <input
           type="text"
           value={value}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className={`w-full bg-black/50 p-4 text-sm font-medium text-white outline-none transition-all duration-300 border-2 border-transparent ${
-            isFocused ? 'sketch-border-active' : 'sketch-border border-zinc-800'
-          }`}
+          className="w-full bg-zinc-950/50 border border-zinc-800 rounded-lg p-3 text-sm text-zinc-200 transition-all duration-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
         />
       )}
     </div>
   );
 };
 
-// --- Responsive Navigator ---
+// --- Professional Navigation ---
 
-const Navigator: React.FC<{ current: StepId; onClick: (s: StepId) => void }> = ({ current, onClick }) => {
-  const steps: { id: StepId; icon: string; label: string }[] = [
-    { id: 'identity', icon: '01', label: 'Identity' },
-    { id: 'context', icon: '02', label: 'Context' },
-    { id: 'scenarios', icon: '03', label: 'Logic' },
-    { id: 'preview', icon: '04', label: 'Code' },
-    { id: 'sandbox', icon: '05', label: 'Live' },
+const Sidebar: React.FC<{ current: StepId; onClick: (s: StepId) => void }> = ({ current, onClick }) => {
+  const steps: { id: StepId; icon: React.ReactNode; label: string }[] = [
+    { id: 'identity', icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>, label: 'Identity' },
+    { id: 'context', icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" /></svg>, label: 'Context' },
+    { id: 'scenarios', icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>, label: 'Logic' },
+    { id: 'preview', icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>, label: 'Code' },
+    { id: 'sandbox', icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>, label: 'Live' },
   ];
 
   return (
-    <nav className="flex lg:flex-col items-center justify-around lg:justify-start lg:py-12 lg:gap-12 bg-zinc-950/50 border-t lg:border-t-0 lg:border-r-2 border-white/10 w-full lg:w-28 h-24 lg:h-full z-40 fixed lg:static bottom-0 left-0 backdrop-blur-md">
-      {steps.map((step) => {
-        const isActive = current === step.id;
-        return (
-          <button
-            key={step.id}
-            onClick={() => onClick(step.id)}
-            className="group relative flex flex-col items-center flex-1 lg:flex-none"
-          >
-            <div className={`w-12 h-12 rounded-full border-2 flex items-center justify-center handwritten text-lg font-bold transition-all duration-500 ${
-              isActive 
-                ? 'bg-orange-500 border-orange-300 text-black scale-125 shadow-[0_0_30px_rgba(249,115,22,0.6)]' 
-                : 'border-zinc-700 text-zinc-500 hover:border-zinc-400 hover:text-zinc-200'
-            }`}>
-              {step.icon}
-            </div>
-            <span className={`text-[10px] mono mt-3 uppercase tracking-widest lg:hidden font-black ${isActive ? 'text-orange-400 text-shadow-vivid' : 'text-zinc-600'}`}>
-              {step.label}
-            </span>
-            <div className={`hidden lg:block absolute top-1/2 left-20 -translate-y-1/2 bg-orange-500 text-black font-black px-4 py-1.5 text-[10px] uppercase mono tracking-widest opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap z-50 pointer-events-none translate-x-[-15px] group-hover:translate-x-0 shadow-2xl`}>
-              {step.label}
-            </div>
-          </button>
-        );
-      })}
+    <nav className="flex lg:flex-col items-center justify-between lg:justify-start lg:py-8 lg:gap-2 bg-zinc-950 border-t lg:border-t-0 lg:border-r border-zinc-800 w-full lg:w-20 xl:w-64 h-20 lg:h-full z-40 fixed lg:static bottom-0 left-0">
+      <div className="hidden lg:flex items-center gap-3 px-6 mb-10 w-full">
+        <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center shrink-0 shadow-lg shadow-indigo-500/20">
+          <span className="font-black text-white text-lg">M</span>
+        </div>
+        <span className="font-bold text-sm tracking-tighter xl:block hidden">MODESHIFT <span className="text-zinc-500 font-normal">v4.2</span></span>
+      </div>
+
+      <div className="flex flex-row lg:flex-col w-full px-2 lg:px-3 gap-1">
+        {steps.map((step) => {
+          const isActive = current === step.id;
+          return (
+            <button
+              key={step.id}
+              onClick={() => onClick(step.id)}
+              className={`relative flex items-center justify-center xl:justify-start gap-4 p-3 rounded-lg transition-all duration-200 flex-1 lg:flex-none ${
+                isActive 
+                  ? 'bg-indigo-500/10 text-indigo-400 font-semibold' 
+                  : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900'
+              }`}
+            >
+              {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-indigo-500 rounded-r-full" />}
+              <span className="shrink-0">{step.icon}</span>
+              <span className="text-xs tracking-wide xl:block hidden uppercase font-medium">{step.label}</span>
+            </button>
+          );
+        })}
+      </div>
     </nav>
   );
 };
@@ -117,12 +111,10 @@ export default function App() {
   const [userInput, setUserInput] = useState('');
   const [isChatting, setIsChatting] = useState(false);
   
-  // General Ingestion States
   const [brainstormInput, setBrainstormInput] = useState('');
   const [isBrainstorming, setIsBrainstorming] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<{ name: string, data: string, mimeType: string } | null>(null);
   
-  // Speaking Pattern Specific States
   const [isAnalyzingSpeech, setIsAnalyzingSpeech] = useState(false);
   const [speechSampleText, setSpeechSampleText] = useState('');
   const [speechFile, setSpeechFile] = useState<{ name: string, data: string, mimeType: string } | null>(null);
@@ -147,11 +139,7 @@ export default function App() {
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64String = (reader.result as string).split(',')[1];
-        const fileData = {
-          name: file.name,
-          data: base64String,
-          mimeType: file.type
-        };
+        const fileData = { name: file.name, data: base64String, mimeType: file.type };
         if (type === 'general') setUploadedFile(fileData);
         else setSpeechFile(fileData);
       };
@@ -193,169 +181,77 @@ export default function App() {
     setMessages(newMessages);
     setUserInput('');
     setIsChatting(true);
-    
     try {
       const response = await chatWithExpert(finalPrompt, newMessages);
       setMessages([...newMessages, { role: 'model', text: response || 'No response.' }]);
     } catch (e) {
-      setMessages([...newMessages, { role: 'model', text: 'SYSTEM ERROR: NEURAL DISCONNECT. REINITIALIZING...' }]);
+      setMessages([...newMessages, { role: 'model', text: 'CONNECTION_ERROR: Failed to reach expert node.' }]);
     } finally {
       setIsChatting(false);
     }
   };
 
-  // --- Export Serialization Functions ---
-
-  const toYAML = (obj: any) => {
-    return Object.entries(obj)
-      .map(([key, value]) => {
-        const escaped = String(value).replace(/\n/g, '\\n');
-        return `${key}: "${escaped}"`;
-      })
-      .join('\n');
-  };
-
-  const toXML = (obj: any) => {
-    const content = Object.entries(obj)
-      .map(([key, value]) => `<${key}>${String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</${key}>`)
-      .join('\n  ');
-    return `<Blueprint>\n  ${content}\n</Blueprint>`;
-  };
+  const toYAML = (obj: any) => Object.entries(obj).map(([k, v]) => `${k}: "${String(v).replace(/\n/g, '\\n')}"`).join('\n');
+  const toXML = (obj: any) => `<Blueprint>\n${Object.entries(obj).map(([k, v]) => `  <${k}>${String(v)}</${k}>`).join('\n')}\n</Blueprint>`;
 
   const exportAction = (type: 'raw' | 'yaml' | 'json' | 'xml') => {
     let content = '';
-    let btnId = '';
-
-    switch (type) {
-      case 'raw': 
-        content = finalPrompt; 
-        btnId = 'export-raw';
-        break;
-      case 'yaml': 
-        content = toYAML(vars); 
-        btnId = 'export-yaml';
-        break;
-      case 'json': 
-        content = JSON.stringify(vars, null, 2); 
-        btnId = 'export-json';
-        break;
-      case 'xml': 
-        content = toXML(vars); 
-        btnId = 'export-xml';
-        break;
-    }
+    let btnId = `export-${type}`;
+    if (type === 'raw') content = finalPrompt;
+    else if (type === 'yaml') content = toYAML(vars);
+    else if (type === 'json') content = JSON.stringify(vars, null, 2);
+    else if (type === 'xml') content = toXML(vars);
 
     navigator.clipboard.writeText(content);
-    
     const btn = document.getElementById(btnId);
     if (btn) {
       const originalText = btn.innerText;
       btn.innerText = 'COPIED';
-      btn.classList.add('bg-green-600', 'text-white', 'border-green-400');
+      btn.classList.add('bg-green-600', 'text-white', 'border-green-600');
       setTimeout(() => {
         btn.innerText = originalText;
-        btn.classList.remove('bg-green-600', 'text-white', 'border-green-400');
+        btn.classList.remove('bg-green-600', 'text-white', 'border-green-600');
       }, 1500);
     }
   };
 
-  const renderPreview = () => {
-    return finalPrompt.split('\n').map((line, i) => {
-      if (!line.trim()) return <br key={i} />;
-      
-      let elements: React.ReactNode[] = [line];
-      
-      const checkVars: (keyof DomainVariables)[] = ['roleTitle', 'domainArea', 'expertiseLevel', 'speakingPatterns'];
-      checkVars.forEach(vKey => {
-        const val = vars[vKey];
-        if (val && line.includes(val)) {
-          const parts = line.split(val);
-          const newElements: React.ReactNode[] = [];
-          parts.forEach((p, idx) => {
-            newElements.push(p);
-            if (idx < parts.length - 1) {
-              newElements.push(<HighlightLabel key={`${i}-${idx}`} text={val} />);
-            }
-          });
-          elements = newElements;
-        }
-      });
-
-      return <div key={i} className="mb-2">{elements}</div>;
-    });
-  };
-
   return (
     <div className="h-screen flex flex-col lg:flex-row bg-zinc-950 text-white overflow-hidden font-sans">
-      
-      {/* Column 1: Navigator */}
-      <Navigator current={activeStep} onClick={setActiveStep} />
+      <Sidebar current={activeStep} onClick={setActiveStep} />
 
-      {/* Column 2: Content Canvas */}
-      <main className="flex-1 flex flex-col min-w-0 bg-black/40 pb-24 lg:pb-0 overflow-hidden relative">
-        <div className="absolute inset-0 blueprint-dots opacity-20 pointer-events-none"></div>
-        
-        <header className="px-8 py-6 border-b-2 border-white/5 flex flex-col md:flex-row gap-6 justify-between items-center bg-zinc-950/95 backdrop-blur-2xl z-30 shadow-2xl">
-          <div className="flex items-center gap-6 self-start md:self-center">
-            <div className="w-12 h-12 border-4 border-orange-500 rounded-sm flex items-center justify-center rotate-6 flex-shrink-0 transition-all hover:rotate-0 hover:scale-110 duration-500 shadow-[0_0_20px_rgba(249,115,22,0.3)]">
-              <span className="text-orange-500 font-black text-3xl handwritten">M</span>
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-2xl font-black tracking-tightest truncate leading-none mb-1 text-white">
-                MODE<span className="text-orange-500 handwritten ml-1 text-3xl">SHIFT</span>
-              </h1>
-              <div className="mono text-[10px] text-zinc-500 uppercase tracking-[0.3em] font-black flex items-center gap-3">
-                <span className="hidden sm:inline bg-zinc-900 px-2 py-0.5 rounded">ARCH_V4.2</span>
-                <span className="text-orange-500/40">●</span>
-                <span className="truncate">NEURAL_DOMAIN_ENGINE</span>
-              </div>
-            </div>
+      <main className="flex-1 flex flex-col min-w-0 bg-zinc-950/20 pb-24 lg:pb-0 overflow-hidden relative">
+        <header className="px-8 h-20 border-b border-zinc-800 flex justify-between items-center bg-zinc-950/80 backdrop-blur-md z-30">
+          <div className="flex items-center gap-4">
+            <h1 className="text-lg font-bold tracking-tight text-white uppercase">{activeStep}</h1>
+            <div className="h-4 w-px bg-zinc-800" />
+            <span className="text-[10px] mono text-zinc-500 uppercase tracking-widest hidden sm:block">Expert Configuration Protocol</span>
           </div>
 
-          <div className="flex flex-wrap gap-2 items-center justify-end w-full md:w-auto">
-             <button 
-              id="export-raw"
-              onClick={() => exportAction('raw')} 
-              className="text-[10px] mono font-black border-2 border-orange-500/30 text-orange-500 px-4 py-2 hover:bg-orange-500 hover:text-black hover:border-orange-400 transition-all uppercase tracking-widest active:scale-95 shadow-xl flex-shrink-0"
-            >
-              PROMPT
-            </button>
-            <button 
-              id="export-json"
-              onClick={() => exportAction('json')} 
-              className="text-[10px] mono font-black border-2 border-zinc-700 text-zinc-400 px-4 py-2 hover:bg-zinc-200 hover:text-black hover:border-white transition-all uppercase tracking-widest active:scale-95 shadow-xl flex-shrink-0"
-            >
-              JSON
-            </button>
-            <button 
-              id="export-yaml"
-              onClick={() => exportAction('yaml')} 
-              className="text-[10px] mono font-black border-2 border-zinc-700 text-zinc-400 px-4 py-2 hover:bg-zinc-200 hover:text-black hover:border-white transition-all uppercase tracking-widest active:scale-95 shadow-xl flex-shrink-0"
-            >
-              YAML
-            </button>
-            <button 
-              id="export-xml"
-              onClick={() => exportAction('xml')} 
-              className="text-[10px] mono font-black border-2 border-zinc-700 text-zinc-400 px-4 py-2 hover:bg-zinc-200 hover:text-black hover:border-white transition-all uppercase tracking-widest active:scale-95 shadow-xl flex-shrink-0"
-            >
-              XML
-            </button>
+          <div className="flex items-center gap-2">
+            {['PROMPT', 'JSON', 'YAML', 'XML'].map((label) => (
+              <button 
+                key={label}
+                id={`export-${label.toLowerCase()}`}
+                onClick={() => exportAction(label.toLowerCase() as any)}
+                className="text-[9px] mono font-bold border border-zinc-800 text-zinc-400 px-3 py-1.5 rounded hover:bg-zinc-800 hover:text-white transition-all uppercase tracking-widest active:scale-95"
+              >
+                {label}
+              </button>
+            ))}
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-6 md:p-12 lg:p-16 custom-scroll relative z-10">
-          <div className="max-w-3xl mx-auto">
-            
+        <div className="flex-1 overflow-y-auto p-6 md:p-12 lg:p-16 custom-scroll">
+          <div className="max-w-4xl mx-auto">
             {activeStep === 'identity' && (
-              <div className="animate-in fade-in slide-in-from-bottom-6 duration-700">
-                <SketchedCard title="Module: Neural_Role_Ingestion">
+              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                <Card title="Expert Ingestion">
                   <div className="space-y-6">
-                    <div className="flex flex-col sm:flex-row gap-4">
+                    <div className="flex flex-col sm:flex-row gap-3">
                       <input 
                         type="text" 
-                        placeholder="Expert Role, Mission, or Topic Overview..." 
-                        className="flex-1 bg-black/70 border-2 border-zinc-800 p-5 text-sm font-bold text-white outline-none focus:border-orange-500 transition-all placeholder:text-zinc-600"
+                        placeholder="Define role, domain, or core topic..." 
+                        className="flex-1 bg-zinc-900/50 border border-zinc-800 p-4 text-sm rounded-lg outline-none focus:border-indigo-500 transition-all placeholder:text-zinc-600"
                         value={brainstormInput}
                         onChange={(e) => setBrainstormInput(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleBrainstorm()}
@@ -363,288 +259,199 @@ export default function App() {
                       <button 
                         onClick={handleBrainstorm}
                         disabled={isBrainstorming}
-                        className="bg-orange-500 text-black px-10 py-5 text-xs font-black uppercase transition-all hover:bg-orange-400 disabled:opacity-50 flex-shrink-0 active:scale-90 shadow-2xl shadow-orange-950/40"
+                        className="bg-indigo-600 text-white px-8 py-4 text-xs font-bold rounded-lg uppercase transition-all hover:bg-indigo-500 disabled:opacity-50"
                       >
-                        {isBrainstorming ? 'SKETCHING...' : 'AI_ROLE_SKETCH'}
+                        {isBrainstorming ? 'Processing...' : 'Auto-Generate'}
                       </button>
                     </div>
                     
-                    <div className="flex flex-wrap items-center gap-5 pt-2">
-                      <input 
-                        type="file" 
-                        ref={fileInputRef} 
-                        onChange={(e) => handleFileChange(e, 'general')} 
-                        className="hidden" 
-                        accept=".pdf,.doc,.docx,.txt"
-                      />
+                    <div className="flex items-center gap-4">
+                      <input type="file" ref={fileInputRef} onChange={(e) => handleFileChange(e, 'general')} className="hidden" />
                       <button 
                         onClick={() => fileInputRef.current?.click()}
-                        className="text-[11px] mono font-black text-zinc-300 border-2 border-dashed border-zinc-700 px-6 py-3.5 hover:text-orange-400 hover:border-orange-600 flex items-center gap-4 uppercase tracking-[0.2em] transition-all bg-zinc-900/40"
+                        className="text-[10px] font-semibold text-zinc-400 border border-zinc-800 px-4 py-2 rounded-lg hover:bg-zinc-900 transition-all flex items-center gap-2 uppercase tracking-wider"
                       >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        {uploadedFile ? uploadedFile.name : 'INGEST_EXPERT_ROLE_DOC'}
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                        {uploadedFile ? uploadedFile.name : 'Ingest Document'}
                       </button>
-                      {uploadedFile && (
-                        <button 
-                          onClick={() => setUploadedFile(null)}
-                          className="text-[10px] text-zinc-500 hover:text-red-500 uppercase mono font-black border-b border-zinc-800"
-                        >
-                          [PURGE_ROLE_DATA]
-                        </button>
-                      )}
                     </div>
                   </div>
-                </SketchedCard>
+                </Card>
 
-                <div className="flex gap-4 mb-6">
-                  <button 
-                    onClick={() => setIdentityTab('core')}
-                    className={`px-8 py-3 mono font-black text-[11px] tracking-widest uppercase transition-all border-2 ${identityTab === 'core' ? 'bg-orange-500 text-black border-orange-400 shadow-[0_0_15px_rgba(249,115,22,0.4)]' : 'bg-zinc-900/50 text-zinc-500 border-zinc-800 hover:border-zinc-600 hover:text-zinc-300'}`}
-                  >
-                    Core Identity
-                  </button>
-                  <button 
-                    onClick={() => setIdentityTab('patterns')}
-                    className={`px-8 py-3 mono font-black text-[11px] tracking-widest uppercase transition-all border-2 ${identityTab === 'patterns' ? 'bg-orange-500 text-black border-orange-400 shadow-[0_0_15px_rgba(249,115,22,0.4)]' : 'bg-zinc-900/50 text-zinc-500 border-zinc-800 hover:border-zinc-600 hover:text-zinc-300'}`}
-                  >
-                    Speaking Patterns
-                  </button>
+                <div className="flex gap-2 p-1 bg-zinc-900/50 border border-zinc-800 rounded-xl w-fit">
+                  <button onClick={() => setIdentityTab('core')} className={`px-6 py-2 text-[10px] font-bold uppercase tracking-widest rounded-lg transition-all ${identityTab === 'core' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}>Core Profile</button>
+                  <button onClick={() => setIdentityTab('patterns')} className={`px-6 py-2 text-[10px] font-bold uppercase tracking-widest rounded-lg transition-all ${identityTab === 'patterns' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}>Linguistic Style</button>
                 </div>
 
                 {identityTab === 'core' ? (
-                  <SketchedCard title="Module: Identity_Logic">
+                  <Card title="Primary Identity Matrix">
                     <div className="grid grid-cols-1 gap-4">
-                      <SketchedInput label="Designated Expert Title" value={vars.roleTitle} onChange={(v) => updateVar('roleTitle', v)} placeholder="e.g. Lead DevSecOps Architect" />
-                      <SketchedInput label="High-Resolution Domain" value={vars.domainArea} onChange={(v) => updateVar('domainArea', v)} placeholder="e.g. Scalable Infrastructure & Network Hardening" />
-                      <SketchedInput label="Operational Mission" type="textarea" value={vars.primaryResponsibilities} onChange={(v) => updateVar('primaryResponsibilities', v)} placeholder="Describe the expert's primary goals..." />
+                      <FormField label="Title / Role" value={vars.roleTitle} onChange={(v) => updateVar('roleTitle', v)} />
+                      <FormField label="Domain Specialization" value={vars.domainArea} onChange={(v) => updateVar('domainArea', v)} />
+                      <FormField label="Operational Mission" type="textarea" value={vars.primaryResponsibilities} onChange={(v) => updateVar('primaryResponsibilities', v)} />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField label="Core Systems" value={vars.keySystems} onChange={(v) => updateVar('keySystems', v)} />
+                        <FormField label="Task Vectors" value={vars.commonTaskTypes} onChange={(v) => updateVar('commonTaskTypes', v)} />
+                      </div>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
-                      <SketchedInput label="Core Technologies" value={vars.keySystems} onChange={(v) => updateVar('keySystems', v)} placeholder="Terraform, Kubernetes, GCP..." />
-                      <SketchedInput label="Primary Task Vectors" value={vars.commonTaskTypes} onChange={(v) => updateVar('commonTaskTypes', v)} placeholder="Troubleshooting, Design, Compliance..." />
-                    </div>
-                  </SketchedCard>
+                  </Card>
                 ) : (
                   <div className="space-y-6">
-                    <SketchedCard title="Module: Specialized_Linguistic_Parser">
-                      <p className="text-[11px] text-zinc-500 mono uppercase mb-8 tracking-[0.2em] leading-relaxed">
-                        Ingest specific text samples (blog posts, whitepapers, transcripts) to extract the linguistic signature of the expert. 
-                        This parser isolates the *style* of speech from the *content* of the role.
-                      </p>
-                      
+                    <Card title="Linguistic Feature Extraction">
                       <div className="space-y-6">
-                        <div className="flex flex-col sm:flex-row gap-4">
+                        <div className="flex flex-col sm:flex-row gap-3">
                           <input 
                             type="text" 
-                            placeholder="Briefly describe the target tone (e.g. 'Highly technical, terse, academic')..." 
-                            className="flex-1 bg-black/70 border-2 border-zinc-800 p-5 text-sm font-bold text-white outline-none focus:border-orange-500 transition-all placeholder:text-zinc-600"
+                            placeholder="Describe target tone or sample context..." 
+                            className="flex-1 bg-zinc-900/50 border border-zinc-800 p-4 text-sm rounded-lg outline-none focus:border-indigo-500 transition-all placeholder:text-zinc-600"
                             value={speechSampleText}
                             onChange={(e) => setSpeechSampleText(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleSpeechAnalysis()}
                           />
-                          <button 
-                            onClick={handleSpeechAnalysis}
-                            disabled={isAnalyzingSpeech}
-                            className="bg-orange-400 text-black px-10 py-5 text-xs font-black uppercase transition-all hover:bg-orange-300 disabled:opacity-50 flex-shrink-0 active:scale-90 shadow-2xl shadow-orange-950/20"
-                          >
-                            {isAnalyzingSpeech ? 'EXTRACTING...' : 'AI_EXTRACT_STYLE'}
+                          <button onClick={handleSpeechAnalysis} disabled={isAnalyzingSpeech} className="bg-indigo-600 text-white px-8 py-4 text-xs font-bold rounded-lg uppercase hover:bg-indigo-500 disabled:opacity-50">
+                            {isAnalyzingSpeech ? 'Analyzing...' : 'Extract Style'}
                           </button>
                         </div>
-                        
-                        <div className="flex flex-wrap items-center gap-5 pt-2">
-                          <input 
-                            type="file" 
-                            ref={speechFileInputRef} 
-                            onChange={(e) => handleFileChange(e, 'speech')} 
-                            className="hidden" 
-                            accept=".pdf,.doc,.docx,.txt"
-                          />
-                          <button 
-                            onClick={() => speechFileInputRef.current?.click()}
-                            className="text-[11px] mono font-black text-orange-400 border-2 border-dashed border-orange-500/30 px-6 py-3.5 hover:text-orange-300 hover:border-orange-500 flex items-center gap-4 uppercase tracking-[0.2em] transition-all bg-orange-500/5"
-                          >
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                            </svg>
-                            {speechFile ? speechFile.name : 'INGEST_STYLE_SAMPLE_DOC'}
-                          </button>
-                          {speechFile && (
-                            <button 
-                              onClick={() => setSpeechFile(null)}
-                              className="text-[10px] text-zinc-500 hover:text-red-500 uppercase mono font-black border-b border-zinc-800"
-                            >
-                              [PURGE_STYLE_DATA]
-                            </button>
-                          )}
-                        </div>
+                        <input type="file" ref={speechFileInputRef} onChange={(e) => handleFileChange(e, 'speech')} className="hidden" />
+                        <button onClick={() => speechFileInputRef.current?.click()} className="text-[10px] font-semibold text-zinc-400 border border-zinc-800 px-4 py-2 rounded-lg hover:bg-zinc-900 flex items-center gap-2 uppercase tracking-wider">
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
+                          {speechFile ? speechFile.name : 'Upload Style Sample'}
+                        </button>
                       </div>
-                    </SketchedCard>
-
-                    <SketchedCard title="Module: Syntactic_Signature">
-                      <SketchedInput 
-                        label="Linguistic Fingerprint" 
-                        type="textarea" 
-                        value={vars.speakingPatterns} 
-                        onChange={(v) => updateVar('speakingPatterns', v)} 
-                        placeholder="Neural linguistic markers will appear here..." 
-                      />
-                    </SketchedCard>
+                    </Card>
+                    <Card title="Syntactic Signature">
+                      <FormField label="Speech Patterns" type="textarea" value={vars.speakingPatterns} onChange={(v) => updateVar('speakingPatterns', v)} placeholder="Stylistic markers extracted from source..." />
+                    </Card>
                   </div>
                 )}
               </div>
             )}
 
             {activeStep === 'context' && (
-              <div className="animate-in fade-in slide-in-from-bottom-6 duration-700">
-                <SketchedCard title="Module: Syntactic_Calibration">
-                  <div className="grid grid-cols-1 gap-4">
-                    <SketchedInput label="Formal Protocol Contexts" value={vars.formalContexts} onChange={(v) => updateVar('formalContexts', v)} />
-                    <SketchedInput label="High-Complexity Technical Contexts" value={vars.technicalContexts} onChange={(v) => updateVar('technicalContexts', v)} />
-                    <SketchedInput label="Linguistic Constraints (Formal-Only)" value={vars.formalityExceptions} onChange={(v) => updateVar('formalityExceptions', v)} />
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 border-t-2 border-white/5 pt-10 mt-6">
-                    <SketchedInput label="Neural_Seniority_Level" value={vars.expertiseLevel} onChange={(v) => updateVar('expertiseLevel', v)} />
-                    <SketchedInput label="Persona_Core_Signature" value={vars.experienceCharacteristic} onChange={(v) => updateVar('experienceCharacteristic', v)} />
-                  </div>
-                </SketchedCard>
+              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                <Card title="Linguistic Environment">
+                  <FormField label="Formal Protocols" value={vars.formalContexts} onChange={(v) => updateVar('formalContexts', v)} />
+                  <FormField label="Technical Depth" value={vars.technicalContexts} onChange={(v) => updateVar('technicalContexts', v)} />
+                  <FormField label="Formality Constraints" value={vars.formalityExceptions} onChange={(v) => updateVar('formalityExceptions', v)} />
+                </Card>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <Card title="Professional Tier">
+                    <FormField label="Seniority Level" value={vars.expertiseLevel} onChange={(v) => updateVar('expertiseLevel', v)} />
+                  </Card>
+                  <Card title="Persona Signature">
+                    <FormField label="Tenure Trait" value={vars.experienceCharacteristic} onChange={(v) => updateVar('experienceCharacteristic', v)} />
+                  </Card>
+                </div>
               </div>
             )}
 
             {activeStep === 'scenarios' && (
-              <div className="animate-in fade-in slide-in-from-bottom-6 duration-700 space-y-12">
-                <SketchedCard title="Module: Behavioral_Synthesis">
-                  <div className="space-y-12">
-                    <div>
-                      <h4 className="handwritten text-orange-500 text-sm font-bold mb-5 tracking-[0.2em] uppercase text-shadow-vivid">State: CRITICAL_URGENCY</h4>
-                      <SketchedInput label="Incident Scenario" value={vars.highUrgencyScenario} onChange={(v) => updateVar('highUrgencyScenario', v)} />
-                      <SketchedInput label="Persona Response Logic" type="textarea" value={vars.crisisResponseStyle} onChange={(v) => updateVar('crisisResponseStyle', v)} />
-                    </div>
-                    <div className="border-t-2 border-white/5 pt-12">
-                      <h4 className="handwritten text-orange-500 text-sm font-bold mb-5 tracking-[0.2em] uppercase text-shadow-vivid">State: KNOWLEDGE_INHERITANCE</h4>
-                      <SketchedInput label="Educational Scenario" value={vars.learningScenario} onChange={(v) => updateVar('learningScenario', v)} />
-                      <SketchedInput label="Mentorship Delivery Style" type="textarea" value={vars.mentoringStyle} onChange={(v) => updateVar('mentoringStyle', v)} />
-                    </div>
-                  </div>
-                </SketchedCard>
+              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                <Card title="State Management: Critical Response">
+                  <FormField label="Incident Vector" value={vars.highUrgencyScenario} onChange={(v) => updateVar('highUrgencyScenario', v)} />
+                  <FormField label="Response Protocol" type="textarea" value={vars.crisisResponseStyle} onChange={(v) => updateVar('crisisResponseStyle', v)} />
+                </Card>
+                <Card title="State Management: Education">
+                  <FormField label="Mentorship Context" value={vars.learningScenario} onChange={(v) => updateVar('learningScenario', v)} />
+                  <FormField label="Transfer Style" type="textarea" value={vars.mentoringStyle} onChange={(v) => updateVar('mentoringStyle', v)} />
+                </Card>
               </div>
             )}
 
             {activeStep === 'preview' && (
-              <div className="animate-in fade-in slide-in-from-bottom-6 duration-700 h-full flex flex-col">
-                <SketchedCard title="Module: System_Source_Buffer" className="flex-1 flex flex-col min-h-[600px]">
-                  <div className="flex-1 overflow-y-auto mono text-[11px] sm:text-[13px] text-zinc-100 p-8 bg-black/80 sketch-border border-white/10 whitespace-pre-wrap font-medium leading-relaxed custom-scroll selection:bg-orange-500/30">
-                    {renderPreview()}
+              <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 h-full">
+                <Card className="h-full min-h-[600px] flex flex-col">
+                  <div className="flex-1 mono text-xs text-zinc-400 bg-zinc-950 p-8 rounded-lg border border-zinc-800 overflow-y-auto custom-scroll leading-relaxed whitespace-pre-wrap">
+                    {finalPrompt.split('\n').map((line, i) => <div key={i} className="mb-1">{line || <br/>}</div>)}
                   </div>
-                </SketchedCard>
+                </Card>
               </div>
             )}
 
             {activeStep === 'sandbox' && (
-              <div className="animate-in fade-in slide-in-from-bottom-6 duration-700 h-full flex flex-col overflow-hidden min-h-[600px]">
-                <SketchedCard title="Module: LIVE_EMULATION_UNIT" className="flex-1 flex flex-col overflow-hidden">
-                  <div ref={chatScrollRef} className="flex-1 overflow-y-auto space-y-8 mb-6 pr-4 custom-scroll scroll-smooth">
+              <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 h-full flex flex-col min-h-[600px]">
+                <Card className="flex-1 flex flex-col overflow-hidden">
+                  <div ref={chatScrollRef} className="flex-1 overflow-y-auto space-y-6 pr-4 custom-scroll pb-6">
                     {messages.length === 0 && (
-                      <div className="h-full flex flex-col items-center justify-center opacity-40 italic space-y-6">
-                        <div className="w-20 h-20 border-4 border-dashed border-orange-500/60 rounded-full glow-pulse-intense"></div>
-                        <p className="text-[12px] mono tracking-[0.5em] font-black uppercase text-center text-orange-400">Core_Neural_Link: IDLE<br/>Awaiting_Command_Packet</p>
+                      <div className="h-full flex flex-col items-center justify-center text-zinc-600">
+                        <div className="w-12 h-12 border border-zinc-800 rounded-full mb-4 flex items-center justify-center animate-glow">
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                        </div>
+                        <p className="text-[10px] uppercase tracking-[0.3em] font-medium">Awaiting Initial Transmission</p>
                       </div>
                     )}
                     {messages.map((m, i) => (
                       <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`p-5 max-w-[94%] sm:max-w-[85%] border-2 transition-all duration-500 shadow-xl ${
-                          m.role === 'user' 
-                            ? 'bg-orange-600/10 text-orange-300 border-orange-500/40' 
-                            : 'bg-zinc-800/60 text-white border-zinc-700'
-                        } sketch-border`}>
-                          <p className="text-sm font-medium leading-relaxed">{m.text}</p>
+                        <div className={`p-4 rounded-xl text-sm max-w-[85%] border shadow-sm ${
+                          m.role === 'user' ? 'bg-indigo-600/10 text-indigo-300 border-indigo-500/30' : 'bg-zinc-900 text-zinc-300 border-zinc-800'
+                        }`}>
+                          {m.text}
                         </div>
                       </div>
                     ))}
                     {isChatting && (
                       <div className="flex justify-start">
-                        <div className="bg-orange-600 text-black border-2 border-orange-400 p-4 text-[10px] mono font-black animate-pulse sketch-border shadow-[0_0_20px_rgba(249,115,22,0.4)]">
-                          COMPUTING_RESPONSE_MATRIX...
+                        <div className="bg-zinc-900 border border-zinc-800 p-3 rounded-xl flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-pulse" />
+                          <span className="text-[10px] mono uppercase text-zinc-500 font-bold">Synthesizing...</span>
                         </div>
                       </div>
                     )}
                   </div>
-                  <div className="flex gap-4 pt-8 border-t-2 border-white/5 flex-shrink-0">
+                  <div className="flex gap-3 pt-6 border-t border-zinc-800">
                     <input 
-                      type="text" 
-                      value={userInput}
-                      onChange={e => setUserInput(e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && handleSendMessage()}
-                      placeholder="Input Operational Query..."
-                      className="flex-1 bg-black/70 border-2 border-zinc-800 p-5 text-sm font-bold text-white sketch-border outline-none focus:border-orange-500 transition-all placeholder:text-zinc-700"
+                      type="text" value={userInput} onChange={e => setUserInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSendMessage()}
+                      placeholder="Input operational command..."
+                      className="flex-1 bg-zinc-950/50 border border-zinc-800 p-4 text-sm rounded-xl focus:border-indigo-500 outline-none transition-all"
                     />
-                    <button 
-                      onClick={handleSendMessage} 
-                      disabled={isChatting || !userInput.trim()}
-                      className="w-16 h-16 bg-orange-500 text-black flex items-center justify-center transition-all hover:bg-orange-400 hover:scale-105 disabled:opacity-20 flex-shrink-0 active:scale-90 shadow-2xl shadow-orange-950/40"
-                    >
-                      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                      </svg>
+                    <button onClick={handleSendMessage} disabled={isChatting || !userInput.trim()} className="w-14 h-14 bg-indigo-600 text-white flex items-center justify-center rounded-xl hover:bg-indigo-500 disabled:opacity-20 active:scale-95 transition-all">
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
                     </button>
                   </div>
-                </SketchedCard>
+                </Card>
               </div>
             )}
-
           </div>
         </div>
       </main>
 
-      {/* Column 3: Blueprint Preview - Desktop Only */}
-      <aside className="hidden lg:flex w-[420px] xl:w-[520px] border-l-2 border-white/10 flex-col bg-zinc-950 p-10 overflow-hidden relative">
-        <div className="absolute top-0 right-0 p-8 pointer-events-none">
-          <div className="text-[8px] text-zinc-800 font-black uppercase rotate-90 origin-bottom-right tracking-[1em] opacity-40">SYSTEM_ARCH_X_PRO</div>
-        </div>
-
-        <div className="mb-14 flex-shrink-0">
-          <h4 className="text-[11px] mono font-black text-zinc-500 uppercase tracking-[0.4em] mb-8 flex items-center gap-4">
-            <span className="w-2.5 h-2.5 rounded-full bg-orange-500 animate-pulse shadow-[0_0_15px_#f97316]"></span>
-            LIVE_VARIABLE_INJECT
+      <aside className="hidden lg:flex w-72 xl:w-80 border-l border-zinc-800 flex-col bg-zinc-950 p-8">
+        <div className="mb-10">
+          <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+            Active Parameters
           </h4>
-          <div className="space-y-6">
-            <div className="p-5 bg-zinc-900/60 border-2 border-white/5 sketch-border relative transition-all duration-500 hover:border-orange-500/40 hover:bg-zinc-900">
-              <span className="absolute -top-2.5 left-4 bg-zinc-950 px-2 text-[8px] text-orange-500 mono font-black uppercase tracking-[0.2em]">@active_role</span>
-              <HighlightLabel text={vars.roleTitle} />
+          <div className="space-y-4">
+            <div className="p-4 bg-zinc-900/40 border border-zinc-800 rounded-lg">
+              <span className="block text-[8px] text-zinc-600 uppercase tracking-widest mb-2 font-bold">Expert Designation</span>
+              <Badge text={vars.roleTitle} />
             </div>
-            <div className="p-5 bg-zinc-900/60 border-2 border-white/5 sketch-border relative transition-all duration-500 hover:border-orange-500/40 hover:bg-zinc-900">
-              <span className="absolute -top-2.5 left-4 bg-zinc-950 px-2 text-[8px] text-orange-500 mono font-black uppercase tracking-[0.2em]">@active_domain</span>
-              <HighlightLabel text={vars.domainArea} />
+            <div className="p-4 bg-zinc-900/40 border border-zinc-800 rounded-lg">
+              <span className="block text-[8px] text-zinc-600 uppercase tracking-widest mb-2 font-bold">Core Domain</span>
+              <Badge text={vars.domainArea} />
             </div>
           </div>
         </div>
 
-        <div className="flex-1 flex flex-col overflow-hidden relative">
-          <h4 className="text-[11px] mono font-black text-zinc-500 uppercase tracking-[0.4em] mb-6 flex items-center gap-4">
-            <span className="w-2.5 h-2.5 rounded-full bg-zinc-800"></span>
-            BLUEPRINT_CORE_TRACE
-          </h4>
-          <div className="flex-1 bg-zinc-900/20 border-2 border-white/5 p-8 rounded-3xl relative overflow-hidden flex flex-col">
-            <div className="flex-1 overflow-y-auto custom-scroll mono text-[11px] leading-relaxed text-zinc-400 font-bold pr-4 scroll-smooth">
-              {renderPreview()}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.3em] mb-4">Architecture Trace</h4>
+          <div className="flex-1 bg-zinc-950 border border-zinc-800 p-4 rounded-lg overflow-y-auto custom-scroll">
+            <div className="mono text-[10px] text-zinc-600 leading-relaxed">
+              {finalPrompt.slice(0, 1000)}...
             </div>
           </div>
         </div>
       </aside>
 
-      {/* Global Status Bar */}
-      <footer className="fixed bottom-0 left-0 right-0 h-12 px-8 border-t-2 border-white/10 bg-zinc-950/98 backdrop-blur-3xl flex justify-between items-center z-50 text-[10px] mono text-zinc-600 font-black">
-        <div className="handwritten tracking-[0.3em] opacity-70 flex items-center gap-6">
-          <span className="text-orange-500/80">MODE_SHIFT_X_ULTIMATE</span>
-          <span className="lg:inline hidden border-l-2 border-zinc-800 pl-6">PROTOCOL_V5_STABLE</span>
-        </div>
-        <div className="hidden md:flex gap-12 uppercase">
-          <span className={`transition-all duration-500 ${vars.roleTitle ? 'text-orange-500 text-shadow-vivid' : ''}`}>VAR_ID: {vars.roleTitle ? 'LOCKED_OK' : 'NULL'}</span>
-          <span className={`transition-all duration-500 ${vars.domainArea ? 'text-orange-500 text-shadow-vivid' : ''}`}>VAR_DOMAIN: {vars.domainArea ? 'LOCKED_OK' : 'NULL'}</span>
+      <footer className="fixed bottom-0 left-0 right-0 h-12 px-8 border-t border-zinc-800 bg-zinc-950/90 backdrop-blur-md flex justify-between items-center z-50 text-[10px] mono text-zinc-500">
+        <div className="flex items-center gap-6">
+          <span className="uppercase tracking-widest font-bold">MS_ARCH_SYSTEM</span>
+          <div className="h-3 w-px bg-zinc-800" />
+          <span className="hidden sm:inline">PROTOCOL: ALPHA_STABLE</span>
         </div>
         <div className="flex items-center gap-3">
-           <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse shadow-[0_0_10px_#f97316]"></span>
-           <span className="uppercase tracking-[0.4em] text-orange-400/80">NEURAL_STREAM_ACTIVE</span>
+          <div className="w-2 h-2 rounded-full bg-green-500/80 animate-glow" />
+          <span className="uppercase tracking-widest font-bold text-zinc-400">Environment Ready</span>
         </div>
       </footer>
     </div>
