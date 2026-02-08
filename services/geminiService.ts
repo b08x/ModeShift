@@ -2,13 +2,14 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { DomainVariables } from "../types";
 
-const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+// Note: Initialization is performed within each function to ensure the most up-to-date API key is used, as per guidelines.
 
 export const brainstormVariables = async (
   topic: string, 
   fileData?: { data: string, mimeType: string }
 ): Promise<Partial<DomainVariables>> => {
-  const ai = getAI();
+  // Always initialize with process.env.API_KEY as a named parameter
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
   const parts: any[] = [
     { text: `Brainstorm domain expert variables for the following topic/context: "${topic}". 
@@ -48,7 +49,8 @@ export const brainstormVariables = async (
   });
 
   try {
-    return JSON.parse(response.text);
+    const jsonStr = response.text?.trim() || "{}";
+    return JSON.parse(jsonStr);
   } catch (e) {
     console.error("Failed to parse AI response", e);
     return {};
@@ -59,7 +61,8 @@ export const extractLinguisticPatterns = async (
   sampleText: string,
   fileData?: { data: string, mimeType: string }
 ): Promise<string> => {
-  const ai = getAI();
+  // Always initialize with process.env.API_KEY as a named parameter
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const parts: any[] = [
     { text: `Analyze the provided text/document for unique linguistic markers, speaking patterns, and stylistic signatures. 
     Identify and describe the following in a concise, action-oriented summary:
@@ -91,12 +94,19 @@ export const extractLinguisticPatterns = async (
 };
 
 export const chatWithExpert = async (systemPrompt: string, history: { role: 'user' | 'model', text: string }[]) => {
-  const ai = getAI();
+  // Always initialize with process.env.API_KEY as a named parameter
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  
+  // Create chat with history to maintain conversational context
   const chat = ai.chats.create({
     model: 'gemini-3-pro-preview',
     config: {
       systemInstruction: systemPrompt,
-    }
+    },
+    history: history.slice(0, -1).map(h => ({
+      role: h.role,
+      parts: [{ text: h.text }]
+    }))
   });
 
   const lastMessage = history[history.length - 1].text;

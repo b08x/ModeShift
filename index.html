@@ -3,25 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ModeShift | Professional System Architect</title>
+    <title>ModeShift | Technical Slate Architect</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-base: #09090b;
-            --bg-surface: #121217;
-            --accent: #6366f1; /* Indigo 500 */
-            --accent-soft: rgba(99, 102, 241, 0.1);
-            --border-base: #27272a;
-            --text-primary: #f4f4f5;
-            --text-secondary: #a1a1aa;
+            /* Technical Slate Design Tokens */
+            --bg-app: #0f172a;       /* Slate 900 */
+            --bg-panel: #1e293b;     /* Slate 800 */
+            --bg-input: #020617;     /* Slate 950 (Recessed) */
+            --border-subtle: #334155; /* Slate 700 */
+            --border-focus: #38bdf8;  /* Sky 400 */
+            --text-primary: #f8fafc;  /* Slate 50 */
+            --text-secondary: #94a3b8; /* Slate 400 */
+            --accent-primary: #0ea5e9; /* Sky 500 */
         }
 
         body { 
           font-family: 'Inter', sans-serif; 
-          background-color: var(--bg-base); 
+          background-color: var(--bg-app); 
           color: var(--text-primary);
           margin: 0;
           height: 100vh;
@@ -30,53 +32,41 @@
 
         .mono { font-family: 'JetBrains Mono', monospace; }
         
-        .grid-bg {
+        /* Subtle scanline/grid effect for technical feel */
+        .technical-bg {
           background-image: 
-            linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px);
-          background-size: 40px 40px;
+            linear-gradient(to right, rgba(56, 189, 248, 0.02) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(56, 189, 248, 0.02) 1px, transparent 1px);
+          background-size: 30px 30px;
         }
 
-        .custom-scroll::-webkit-scrollbar { width: 4px; }
-        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 10px; }
-        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #52525b; }
+        .custom-scroll::-webkit-scrollbar { width: 5px; }
+        .custom-scroll::-webkit-scrollbar-track { background: var(--bg-app); }
+        .custom-scroll::-webkit-scrollbar-thumb { background: var(--border-subtle); border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
 
-        .glass-card {
-          background: rgba(24, 24, 27, 0.4);
-          backdrop-filter: blur(8px);
-          border: 1px solid var(--border-base);
+        .panel-surface {
+          background: var(--bg-panel);
+          border: 1px solid var(--border-subtle);
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
 
-        .active-border {
-          border-color: var(--accent);
-          box-shadow: 0 0 20px rgba(99, 102, 241, 0.1);
+        .input-recessed {
+          background: var(--bg-input) !important;
+          border: 1px solid var(--border-subtle);
+          transition: all 0.2s ease;
         }
 
-        @keyframes subtle-glow {
-          0%, 100% { opacity: 0.5; }
+        .input-recessed:focus {
+          border-color: var(--border-focus);
+          box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.15);
+        }
+
+        @keyframes pulse-soft {
+          0%, 100% { opacity: 0.6; }
           50% { opacity: 1; }
         }
-        .animate-glow { animation: subtle-glow 4s ease-in-out infinite; }
-        
-        input:focus, textarea:focus {
-          outline: none;
-          border-color: var(--accent);
-          background-color: rgba(0, 0, 0, 0.3);
-        }
-
-        .nav-indicator {
-          position: absolute;
-          left: 0;
-          width: 2px;
-          height: 100%;
-          background: var(--accent);
-          opacity: 0;
-          transition: all 0.3s ease;
-        }
-        .nav-item-active .nav-indicator {
-          opacity: 1;
-        }
+        .animate-status { animation: pulse-soft 3s ease-in-out infinite; }
     </style>
 <script type="importmap">
 {
@@ -89,7 +79,7 @@
 }
 </script>
 </head>
-<body class="grid-bg overflow-hidden selection:bg-indigo-500/30">
+<body class="technical-bg overflow-hidden selection:bg-sky-500/30">
     <div id="root"></div>
 </body>
 </html>
