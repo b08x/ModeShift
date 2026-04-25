@@ -3,22 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ModeShift | Technical Slate Architect</title>
+    <title>ModeShift | Obsidian Amber Architect</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            /* Technical Slate Design Tokens */
-            --bg-app: #0f172a;       /* Slate 900 */
-            --bg-panel: #1e293b;     /* Slate 800 */
-            --bg-input: #020617;     /* Slate 950 (Recessed) */
-            --border-subtle: #334155; /* Slate 700 */
-            --border-focus: #38bdf8;  /* Sky 400 */
-            --text-primary: #f8fafc;  /* Slate 50 */
-            --text-secondary: #94a3b8; /* Slate 400 */
-            --accent-primary: #0ea5e9; /* Sky 500 */
+            /* Obsidian Amber Design Tokens */
+            --bg-app: #050505;        /* Deepest Black */
+            --bg-panel: #0f0f12;      /* Midnight Gray */
+            --bg-input: #020202;      /* Recessed Pitch Black */
+            --border-subtle: #1e1e21; /* Dark Slate */
+            --border-focus: #f59e0b;  /* Amber 500 */
+            --text-primary: #fafafa;  /* Zinc 50 */
+            --text-secondary: #71717a; /* Zinc 400 */
+            --accent-primary: #f97316; /* Orange 500 */
         }
 
         body { 
@@ -32,23 +32,23 @@
 
         .mono { font-family: 'JetBrains Mono', monospace; }
         
-        /* Subtle scanline/grid effect for technical feel */
+        /* Subtle scanline/grid effect for technical feel - now tinted amber */
         .technical-bg {
           background-image: 
-            linear-gradient(to right, rgba(56, 189, 248, 0.02) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(56, 189, 248, 0.02) 1px, transparent 1px);
-          background-size: 30px 30px;
+            linear-gradient(to right, rgba(234, 88, 12, 0.03) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(234, 88, 12, 0.03) 1px, transparent 1px);
+          background-size: 40px 40px;
         }
 
-        .custom-scroll::-webkit-scrollbar { width: 5px; }
+        .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
         .custom-scroll::-webkit-scrollbar-track { background: var(--bg-app); }
         .custom-scroll::-webkit-scrollbar-thumb { background: var(--border-subtle); border-radius: 4px; }
-        .custom-scroll::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: var(--accent-primary); }
 
         .panel-surface {
           background: var(--bg-panel);
           border: 1px solid var(--border-subtle);
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+          box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.7);
         }
 
         .input-recessed {
@@ -59,14 +59,14 @@
 
         .input-recessed:focus {
           border-color: var(--border-focus);
-          box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.15);
+          box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.1);
         }
 
         @keyframes pulse-soft {
-          0%, 100% { opacity: 0.6; }
-          50% { opacity: 1; }
+          0%, 100% { opacity: 0.4; }
+          50% { opacity: 0.8; }
         }
-        .animate-status { animation: pulse-soft 3s ease-in-out infinite; }
+        .animate-status { animation: pulse-soft 4s ease-in-out infinite; }
     </style>
 <script type="importmap">
 {
@@ -78,8 +78,10 @@
   }
 }
 </script>
+<link rel="stylesheet" href="/index.css">
 </head>
 <body class="technical-bg overflow-hidden selection:bg-sky-500/30">
     <div id="root"></div>
+<script type="module" src="/index.tsx"></script>
 </body>
 </html>
